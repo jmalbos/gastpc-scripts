@@ -50,7 +50,7 @@ FLUXAPP='copy_dune_ndtf_flux'
 
 ############################################################
 
-#setup jobsub_client
+setup jobsub_client
 
 for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
 
@@ -122,7 +122,9 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo 'ifdh cp '${ROCKFILE}' rock.ghep.root'               >> ${SCRIPT}
   echo 'ifdh cp '${G4MACRO}' g4_config.mac'                 >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
-  echo 'GasTPCG4Sim -c g4_config.mac -d DUNE -g BEAM_SPILL -n 250 -r '${i}
+  echo 'GasTPCG4Sim \'                                      >> ${SCRIPT}
+  echo ' -c g4_config.mac \'                                >> ${SCRIPT}
+  echo ' -d DUNE -g BEAM_SPILL -n 250 -r '${i}              >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
 
   ### Copy files to dCache #############################################
