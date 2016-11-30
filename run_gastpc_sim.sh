@@ -45,7 +45,7 @@ FLUXAPP='copy_dune_ndtf_flux'
 
 ############################################################
 
-setup jobsub_client
+#setup jobsub_client
 
 for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
 
@@ -108,16 +108,16 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   ### Run Geant4 app ###################################################
 
   G4_CONFIG=g4_config.${JOB_NUMBER}.mac
-  ROCKFILE=`shuf -n 1 `${USRDIR}/rock_${FLAVOUR}.txt
-  COSMICS=
+  ROCKFILE=`shuf -n 1 ${USRDIR}/rock_${FLAVOUR}.txt`
+#  COSMICS=
 
   echo ${ROCKFILE}
 
-  echo '/gastpc/geometry/magfield_strength 0.4 tesla'       >> ${G4_CONFIG}
+  echo '/gastpc/geometry/magfield_strength 0.4 tesla'       > ${G4_CONFIG}
   echo '/gastpc/generator/add_ghep_source '${FLAVOUR}.${i}.ghep.root' 125' >> ${G4_CONFIG}
   echo '/gastpc/generator/add_ghep_source rock.ghep.root 666' >> ${G4_CONFIG}
   echo '/gastpc/generator/add_cosmics_source gntp.generator-allcosmics.ghep.root' >> ${G4_CONFIG}
-  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${rnd}'.g4sim.root'          > ${G4_CONFIG}
+  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${rnd}'.g4sim.root'          >> ${G4_CONFIG}
 
   echo 'ifdh cp '${COSMICS}' cosmics.ghep.root' >> ${SCRIPT}
   echo 'ifdh cp '${ROCKFILE}' rock.ghep.root' >> ${SCRIPT}
@@ -128,8 +128,8 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
 
   echo 'rm '${FLAVOUR}.${i}.ghep.root                       >> ${SCRIPT}
 
-  jobsub_submit \
-   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=1h \
-   file://${SCRIPT}
+#  jobsub_submit \
+#   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=1h \
+#   file://${SCRIPT}
 
 done
