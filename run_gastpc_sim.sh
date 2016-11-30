@@ -23,9 +23,15 @@ LOWER_BOUND=$2
 UPPER_BOUND=$3
 
 if [ "${FLAVOUR}" == "neutrino" ]; then
-  NUM_EVENTS=31600
+  NU_EVENTS=125
+  GENIE_EVENTS=31780 # 125 times 250 plus 3 sigma
+  ROCK_EVENTS=666
+  ROCK_LISTFILE="rock_${FLAVOUR}.txt"
 elif [ "${FLAVOUR}" == "antineutrino" ]; then
-  NUM_EVENTS=100
+  NU_EVENTS=50
+  GENIE_EVENTS=12835 # 50 times 250 plus 3 sigma
+  ROCK_EVENTS=448
+  ROCK_LISTFILE="rock_${FLAVOUR}.txt"
 else
   print_usage
   echo '       <mode>: neutrino | antineutrino'
@@ -33,8 +39,7 @@ else
 fi
 
 echo "-- Flavour mode: ${FLAVOUR}"
-echo "-- Lower bound: ${LOWER_BOUND}"
-echo "-- Upper bound: ${UPPER_BOUND}"
+echo "-- Job number range: [ ${LOWER_BOUND}, ${UPPER_BOUND} ]"
 
 ############################################################
 
@@ -62,16 +67,11 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo '#!/usr/bin/env bash'                                >  ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
   echo 'source /grid/fermiapp/products/dune/setup_dune.sh'  >> ${SCRIPT}
-  echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
+  echo 'gastpc v2_3 -q e10:prof'                            >> ${SCRIPT}
+# echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
   echo 'setup genie_xsec v2_10_6 -q defaultplusccmec'       >> ${SCRIPT}
   echo 'setup genie_phyopt v2_10_6 -q dkcharmtau'           >> ${SCRIPT}
   echo 'setup ifdhc'                                        >> ${SCRIPT}
-  echo ''                                                   >> ${SCRIPT}
-
-  ### Configuration variables ##########################################
-  echo 'MSGTHR=${GENIEPHYOPTPATH}/Messenger_production.xml' >> ${SCRIPT}
-  echo 'export GXMLPATH='${USRDIR}':${GXMLPATH}'            >> ${SCRIPT}
-  echo 'export GNUMIXML=DUNE-NDTF-v01.xml'                  >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
 
   ### Copy flux files ##################################################
@@ -85,13 +85,17 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ''                                                   >> ${SCRIPT}
 
   ### Run GENIE ########################################################
+  echo 'MSGTHR=${GENIEPHYOPTPATH}/Messenger_production.xml' >> ${SCRIPT}
+  echo 'export GXMLPATH='${USRDIR}':${GXMLPATH}'            >> ${SCRIPT}
+  echo 'export GNUMIXML=DUNE-NDTF-v01.xml'                  >> ${SCRIPT}
+  echo ''                                                   >> ${SCRIPT}
   echo 'gevgen_fnal \'                                      >> ${SCRIPT}
   echo ' -f local_flux_files/gsimple*.root,DUNE-NDTF-01 \'  >> ${SCRIPT}
   echo ' -g '${USRDIR}/'geometry.gdml \'                    >> ${SCRIPT}
   echo ' -m '${USRDIR}/'geometry_mxpl.xml \'                >> ${SCRIPT}
   echo ' -t NEAR_DETECTOR_ENV \'                            >> ${SCRIPT}
   echo ' -L cm \'                                           >> ${SCRIPT}
-  echo ' -n '${NUM_EVENTS}' \'                              >> ${SCRIPT}
+  echo ' -n '${GENIE_EVENTS}' \'                            >> ${SCRIPT}
   echo ' --seed '${i}' \'                                   >> ${SCRIPT}
   echo ' -r '${i}' \'                                       >> ${SCRIPT}
   echo ' -o '${FLAVOUR}' \'                                 >> ${SCRIPT}
@@ -100,36 +104,42 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ' --cross-sections ${GENIEXSECFILE} \'               >> ${SCRIPT}
   echo ' --event-generator-list DefaultPlusCCMEC'           >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
-  echo 'ifdh cp '${FLAVOUR}.${i}.ghep.root' \'              >> ${SCRIPT}
-  echo ${OUTDIR}/gen/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.ghep.root >> ${SCRIPT}
-
   echo ''                                                   >> ${SCRIPT}
 
   ### Run Geant4 app ###################################################
+  
+  ROCKFILE=`shuf -n 1 ${USRDIR}/${ROCK_LISTFILE}` # Random file from the list
+  COSMICS='/pnfs/dune/persistent/TaskForce_Flux/cosmics/pass3/gntp.generator-allcosmics.ghep.root'
 
-  G4_CONFIG=g4_config.${JOB_NUMBER}.mac
-  ROCKFILE=`shuf -n 1 ${USRDIR}/rock_${FLAVOUR}.txt`
-#  COSMICS=
+  G4MACRO=g4_config.${JOB_NUMBER}.mac
+  echo '/gastpc/geometry/magfield_strength 0.4 tesla'                                > ${G4MACRO}
+  echo '/gastpc/generator/add_ghep_source '${FLAVOUR}.${i}.ghep.root' '${NU_EVENTS} >> ${G4MACRO}
+  echo '/gastpc/generator/add_ghep_source rock.ghep.root '${ROCK_EVENTS}            >> ${G4MACRO}
+  echo '/gastpc/generator/add_cosmics_source cosmics.ghep.root'                     >> ${G4MACRO}
+  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${rnd}'.g4sim.root'           >> ${G4MACRO}
 
-  echo ${ROCKFILE}
-
-  echo '/gastpc/geometry/magfield_strength 0.4 tesla'       > ${G4_CONFIG}
-  echo '/gastpc/generator/add_ghep_source '${FLAVOUR}.${i}.ghep.root' 125' >> ${G4_CONFIG}
-  echo '/gastpc/generator/add_ghep_source rock.ghep.root 666' >> ${G4_CONFIG}
-  echo '/gastpc/generator/add_cosmics_source gntp.generator-allcosmics.ghep.root' >> ${G4_CONFIG}
-  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${rnd}'.g4sim.root'          >> ${G4_CONFIG}
-
-  echo 'ifdh cp '${COSMICS}' cosmics.ghep.root' >> ${SCRIPT}
-  echo 'ifdh cp '${ROCKFILE}' rock.ghep.root' >> ${SCRIPT}
-  echo 'ifdh cp '${G4_CONFIG}' g4_config.mac' >> ${SCRIPT}
-  echo '' >> ${SCRIPT}
+  echo 'ifdh cp '${COSMICS}' cosmics.ghep.root'             >> ${SCRIPT}
+  echo 'ifdh cp '${ROCKFILE}' rock.ghep.root'               >> ${SCRIPT}
+  echo 'ifdh cp '${G4MACRO}' g4_config.mac'                 >> ${SCRIPT}
+  echo ''                                                   >> ${SCRIPT}
   echo 'GasTPCG4Sim -c g4_config.mac -d DUNE -g BEAM_SPILL -n 250 -r '${i}
-  echo ''
+  echo ''                                                   >> ${SCRIPT}
 
-  echo 'rm '${FLAVOUR}.${i}.ghep.root                       >> ${SCRIPT}
+  ### Copy files to dCache #############################################
+  echo 'ifdh cp '${FLAVOUR}.${i}.ghep.root' \'                                    >> ${SCRIPT}
+  echo ${OUTDIR}/gen/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.ghep.root   >> ${SCRIPT}
+  echo ''                                                                         >> ${SCRIPT}
+  echo 'ifdh cp '${FLAVOUR}'.'${rnd}'.g4sim.root \'                               >> ${SCRIPT}
+  echo ${OUTDIR}/sim/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.g4sim.root  >> ${SCRIPT}
+  echo ''                                                                         >> ${SCRIPT}
+  echo 'rm '${FLAVOUR}.${i}.ghep.root                                             >> ${SCRIPT}
+  echo 'rm '${FLAVOUR}.${i}.g4sim.root                                            >> ${SCRIPT}
+  echo 'rm cosmics.ghep.root'                                                     >> ${SCRIPT}
+  echo 'rm rock.ghep.root'                                                        >> ${SCRIPT}
+  echo 'rm g4_config.mac'                                                         >> ${SCRIPT}
 
-#  jobsub_submit \
-#   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=1h \
-#   file://${SCRIPT}
+  jobsub_submit \
+   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=2h \
+   file://${SCRIPT}
 
 done
