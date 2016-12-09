@@ -90,8 +90,8 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ''                                                   >> ${SCRIPT}
   echo 'gevgen_fnal \'                                      >> ${SCRIPT}
   echo ' -f local_flux_files/gsimple*.root,DUNE-NDTF-01 \'  >> ${SCRIPT}
-  echo ' -g '${USRDIR}/'geometry.gdml \'                    >> ${SCRIPT}
-  echo ' -m '${USRDIR}/'geometry_mxpl.xml \'                >> ${SCRIPT}
+  echo ' -g '${USRDIR}/'gastpc_geom_2.gdml \'               >> ${SCRIPT}
+  echo ' -m '${USRDIR}/'gastpc_geom_2_mxpl.xml \'           >> ${SCRIPT}
   echo ' -t NEAR_DETECTOR_ENV \'                            >> ${SCRIPT}
   echo ' -L cm \'                                           >> ${SCRIPT}
   echo ' -n '${GENIE_EVENTS}' \'                            >> ${SCRIPT}
