@@ -66,7 +66,7 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo '#!/usr/bin/env bash'                                >  ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
   echo 'source /grid/fermiapp/products/dune/setup_dune.sh'  >> ${SCRIPT}
-  echo 'setup gastpc v2_3 -q e10:prof'                      >> ${SCRIPT}
+  echo 'setup gastpc v2_3_1 -q e10:prof'                    >> ${SCRIPT}
 # echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
   echo 'setup genie_xsec v2_10_6 -q defaultplusccmec'       >> ${SCRIPT}
   echo 'setup genie_phyopt v2_10_6 -q dkcharmtau'           >> ${SCRIPT}
