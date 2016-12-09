@@ -24,12 +24,12 @@ UPPER_BOUND=$3
 
 if [ "${FLAVOUR}" == "neutrino" ]; then
   NU_EVENTS=125
-  GENIE_EVENTS=31780 # 125 times 250 plus 3 sigma
+  GENIE_EVENTS=25474 # 125 times 200 plus 3 sigma
   ROCK_EVENTS=666
   ROCK_LISTFILE="rock_${FLAVOUR}.txt"
 elif [ "${FLAVOUR}" == "antineutrino" ]; then
   NU_EVENTS=50
-  GENIE_EVENTS=12835 # 50 times 250 plus 3 sigma
+  GENIE_EVENTS=10300 # 50 times 200 plus 3 sigma
   ROCK_EVENTS=448
   ROCK_LISTFILE="rock_${FLAVOUR}.txt"
 else
@@ -46,7 +46,6 @@ echo "-- Job number range: [ ${LOWER_BOUND}, ${UPPER_BOUND} ]"
 USRDIR='/dune/app/users/jmalbos/ndtf/4RT'
 OUTDIR='/pnfs/dune/tape_backed/dunepro/mc/neardet/gartpc/ndtf-4rt'
 FLUXAPP='copy_dune_ndtf_flux'
-
 
 ############################################################
 
@@ -67,7 +66,7 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo '#!/usr/bin/env bash'                                >  ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
   echo 'source /grid/fermiapp/products/dune/setup_dune.sh'  >> ${SCRIPT}
-  echo 'gastpc v2_3 -q e10:prof'                            >> ${SCRIPT}
+  echo 'setup gastpc v2_3 -q e10:prof'                      >> ${SCRIPT}
 # echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
   echo 'setup genie_xsec v2_10_6 -q defaultplusccmec'       >> ${SCRIPT}
   echo 'setup genie_phyopt v2_10_6 -q dkcharmtau'           >> ${SCRIPT}
@@ -80,7 +79,7 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ${FLUXAPP}' \'                                       >> ${SCRIPT}
   echo ' -o local_flux_files \'                             >> ${SCRIPT}
   echo ' -f '${FLAVOUR}' \'                                 >> ${SCRIPT}
-  echo ' -b opt_03 \ '                                      >> ${SCRIPT}
+  echo ' -b opt_03 \'                                       >> ${SCRIPT}
   echo ' --maxmb=60 '                                       >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
 
@@ -111,12 +110,12 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   ROCKFILE=`shuf -n 1 ${USRDIR}/${ROCK_LISTFILE}` # Random file from the list
   COSMICS='/pnfs/dune/persistent/TaskForce_Flux/cosmics/pass3/gntp.generator-allcosmics.ghep.root'
 
-  G4MACRO=g4_config.${JOB_NUMBER}.mac
+  G4MACRO=${USRDIR}/g4_config.${JOB_NUMBER}.mac
   echo '/gastpc/geometry/magfield_strength 0.4 tesla'                                > ${G4MACRO}
   echo '/gastpc/generator/add_ghep_source '${FLAVOUR}.${i}.ghep.root' '${NU_EVENTS} >> ${G4MACRO}
   echo '/gastpc/generator/add_ghep_source rock.ghep.root '${ROCK_EVENTS}            >> ${G4MACRO}
   echo '/gastpc/generator/add_cosmics_source cosmics.ghep.root'                     >> ${G4MACRO}
-  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${rnd}'.g4sim.root'           >> ${G4MACRO}
+  echo '/gastpc/persistency/output_file '${FLAVOUR}'.'${JOB_NUMBER}'.g4sim.root'    >> ${G4MACRO}
 
   echo 'ifdh cp '${COSMICS}' cosmics.ghep.root'             >> ${SCRIPT}
   echo 'ifdh cp '${ROCKFILE}' rock.ghep.root'               >> ${SCRIPT}
@@ -124,24 +123,24 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ''                                                   >> ${SCRIPT}
   echo 'GasTPCG4Sim \'                                      >> ${SCRIPT}
   echo ' -c g4_config.mac \'                                >> ${SCRIPT}
-  echo ' -d DUNE -g BEAM_SPILL -n 250 -r '${i}              >> ${SCRIPT}
+  echo ' -d DUNE -g BEAM_SPILL -n 200 -r '${i}              >> ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
 
   ### Copy files to dCache #############################################
   echo 'ifdh cp '${FLAVOUR}.${i}.ghep.root' \'                                    >> ${SCRIPT}
   echo ${OUTDIR}/gen/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.ghep.root   >> ${SCRIPT}
   echo ''                                                                         >> ${SCRIPT}
-  echo 'ifdh cp '${FLAVOUR}'.'${rnd}'.g4sim.root \'                               >> ${SCRIPT}
+  echo 'ifdh cp '${FLAVOUR}'.'${JOB_NUMBER}'.g4sim.root \'                        >> ${SCRIPT}
   echo ${OUTDIR}/sim/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.g4sim.root  >> ${SCRIPT}
   echo ''                                                                         >> ${SCRIPT}
   echo 'rm '${FLAVOUR}.${i}.ghep.root                                             >> ${SCRIPT}
-  echo 'rm '${FLAVOUR}.${i}.g4sim.root                                            >> ${SCRIPT}
+  echo 'rm '${FLAVOUR}.${JOB_NUMBER}.g4sim.root                                   >> ${SCRIPT}
   echo 'rm cosmics.ghep.root'                                                     >> ${SCRIPT}
   echo 'rm rock.ghep.root'                                                        >> ${SCRIPT}
   echo 'rm g4_config.mac'                                                         >> ${SCRIPT}
 
   jobsub_submit \
-   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=2h \
+   --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=8h \
    file://${SCRIPT}
 
 done
