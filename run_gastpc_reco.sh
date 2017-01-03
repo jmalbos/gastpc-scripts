@@ -66,7 +66,7 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo '#!/usr/bin/env bash'                                >  ${SCRIPT}
   echo ''                                                   >> ${SCRIPT}
   echo 'source /grid/fermiapp/products/dune/setup_dune.sh'  >> ${SCRIPT}
-  echo 'setup gastpc v2_3 -q e10:prof'                      >> ${SCRIPT}
+  echo 'setup gastpc v2_4 -q e10:prof'                      >> ${SCRIPT}
 # echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
   echo 'setup genie_xsec v2_10_6 -q defaultplusccmec'       >> ${SCRIPT}
   echo 'setup genie_phyopt v2_10_6 -q dkcharmtau'           >> ${SCRIPT}
@@ -80,14 +80,18 @@ for i in `seq ${LOWER_BOUND} ${UPPER_BOUND}`; do
   echo ''                                                                               >> ${SCRIPT}
 
   ### Run pseudo-reconstruction ########################################
-  echo 'GasTPCReco '
+  echo 'GasTPCReco \'                                       >> ${SCRIPT}
+  echo ' -r '${JOB_NUMBER}' \'                              >> ${SCRIPT}
+  echo ' -m '${FLAVOUR}' \'                                 >> ${SCRIPT}
+  echo ' -i input.g4sim.root \'                             >> ${SCRIPT}
+  echo ' -o '${FLAVOUR}.${JOB_NUMBER}.dst.root              >> ${SCRIPT}
 
   ### Copy files to dCache #############################################
-  echo 'ifdh cp '${FLAVOUR}.${i}.dst.root' \'                                  >> ${SCRIPT}
+  echo 'ifdh cp '${FLAVOUR}.${JOB_NUMBER}.dst.root' \'                         >> ${SCRIPT}
   echo ${OUTDIR}/dst/${FLAVOUR}/${JOB_GROUP}/${FLAVOUR}.${JOB_NUMBER}.dst.root >> ${SCRIPT}
   echo ''                                                                      >> ${SCRIPT}
   echo 'rm input.g4sim.root'                                                   >> ${SCRIPT}
-  echo 'rm '${FLAVOUR}.${i}.dst.root                                           >> ${SCRIPT}
+  echo 'rm '${FLAVOUR}.${JOB_NUMBER}.dst.root                                  >> ${SCRIPT}
 
   jobsub_submit \
    --group dune --role=Analysis -N 1 --OS=SL6 --expected-lifetime=8h \
