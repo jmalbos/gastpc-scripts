@@ -29,8 +29,7 @@ echo "-- Job group: [ ${JOB_GROUP} ]"
 
 USRDIR='/dune/app/users/jmalbos/ndtf/4RT'
 DATADIR='/pnfs/dune/tape_backed/dunepro/mc/neardet/gartpc/ndtf-4rt'
-#SCRIPT=${USRDIR}/${FLAVOUR}.${JOB_GROUP}.sh
-SCRIPT=$PWD/file.sh
+SCRIPT=${USRDIR}/${FLAVOUR}.${JOB_GROUP}.sh
 
 ######################################################################
 
@@ -41,7 +40,8 @@ echo "DATADIR=${DATADIR}"                                 >> ${SCRIPT}
 echo "FLAVOUR=${FLAVOUR}"                                 >> ${SCRIPT}
 echo ''                                                   >> ${SCRIPT}
 echo "JOB_GROUP=${JOB_GROUP}"                             >> ${SCRIPT}
-echo "JOB_NUMBER=$((JOB_GROUP * 1000 + PROCESS))"         >> ${SCRIPT}
+echo 'echo ${PROCESS}' >> ${SCRIPT}
+echo 'JOB_NUMBER=$((10#$JOB_GROUP * 1000 + PROCESS))'     >> ${SCRIPT}
 echo 'printf -v JOB_NUMBER '\'%05.0f\'' ${JOB_NUMBER}'    >> ${SCRIPT}
 echo 'echo "-- Job number: [ ${JOB_NUMBER} ]"'            >> ${SCRIPT}
 echo ''                                                   >> ${SCRIPT}
@@ -54,7 +54,7 @@ echo ''                                                   >> ${SCRIPT}
 
 ### Initialize ups and setup required products #######################
 echo 'source /grid/fermiapp/products/dune/setup_dune.sh'  >> ${SCRIPT}
-echo 'setup gastpc v2_4 -q e10:prof'                      >> ${SCRIPT}
+echo 'setup gastpc v2_5_2 -q e10:prof'                    >> ${SCRIPT}
 #echo 'setup genie v2_10_10 -q e10:prof:r6'                >> ${SCRIPT}
 echo 'setup genie_xsec v2_10_6 -q defaultplusccmec'       >> ${SCRIPT}
 echo 'setup genie_phyopt v2_10_6 -q dkcharmtau'           >> ${SCRIPT}
@@ -83,7 +83,7 @@ echo 'rm ${INFILE}'                                       >> ${SCRIPT}
 echo 'rm ${OUTFILE}'                                      >> ${SCRIPT}
 echo ''                                                   >> ${SCRIPT}
 
-#setup jobsub_client
-#jobsub_submit \
-#  --group dune --role=Analysis -N 1000 --OS=SL6 --expected-lifetime=8h \
-#  file://${SCRIPT}
+setup jobsub_client
+jobsub_submit \
+  --group dune --role=Analysis -N 1000 --OS=SL6 --expected-lifetime=8h \
+  file://${SCRIPT}
