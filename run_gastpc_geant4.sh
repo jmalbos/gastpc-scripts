@@ -95,5 +95,5 @@ echo ''                                                     >> ${SCRIPT}
 
 setup jobsub_client
 jobsub_submit \
-  --group dune --role=Analysis -N 10 --OS=SL6 --expected-lifetime=8h \
+  --group dune --role=Analysis -N 1000 --OS=SL6 --expected-lifetime=8h \
   file://${SCRIPT}
