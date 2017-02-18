@@ -75,7 +75,7 @@ echo 'ifdh cp ${COSMICS} cosmics.ghep.root'                 >> ${SCRIPT}
 echo ''                                                     >> ${SCRIPT}
 
 ### Run Geant4 app #############################################################
-echo 'ifdh ${G4MACRO} g4_config.mac'                        >> ${SCRIPT}
+echo 'ifdh cp ${G4MACRO} g4_config.mac'                     >> ${SCRIPT}
 echo ''                                                     >> ${SCRIPT}
 echo 'GasTPCG4Sim \'                                        >> ${SCRIPT}
 echo ' -c g4_config.mac \'                                  >> ${SCRIPT}
