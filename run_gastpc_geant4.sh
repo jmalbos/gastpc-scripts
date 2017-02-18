@@ -6,7 +6,7 @@ print_usage() {
   echo "Usage: `basename ${0}` <mode> <job_group>"
 }
 
-if [[ $# -le 2 ]]; then
+if [[ $# -le 1 ]]; then
   print_usage
   exit 1
 fi
@@ -36,7 +36,7 @@ USRDIR='/dune/app/users/jmalbos/ndtf/4RT'
 DATADIR='/pnfs/dune/tape_backed/dunepro/mc/neardet/gartpc/ndtf-4rt'
 ROCK_LISTFILE="${USRDIR}/rock_${FLAVOUR}.txt"
 SCRIPT="${USRDIR}/${FLAVOUR}.${JOB_GROUP}.g4sim.sh"
-G4MACRO="${USRDIR}/${FLAVOUR}.${JOB_GROUP}.g4sim.mac"
+G4MACRO="${USRDIR}/g4_config.${FLAVOUR}.mac"
 
 ############################################################
 
@@ -51,7 +51,7 @@ echo 'echo "-- Job number: [ ${JOB_NUMBER} ]"'              >> ${SCRIPT}
 echo ''                                                     >> ${SCRIPT}
 echo "DATADIR=${DATADIR}"                                   >> ${SCRIPT}
 echo "ROCK_LISTFILE=${USRDIR}/rock_${FLAVOUR}.txt"          >> ${SCRIPT}
-echo "G4MACRO=${USRDIR}/${FLAVOUR}.${JOB_GROUP}.g4sim.mac"  >> ${SCRIPT}
+echo "G4MACRO=${G4MACRO}"                                   >> ${SCRIPT}
 echo ''                                                     >> ${SCRIPT}
 
 ### Initialize ups and setup required products #################################
@@ -95,5 +95,5 @@ echo ''                                                     >> ${SCRIPT}
 
 setup jobsub_client
 jobsub_submit \
-  --group dune --role=Analysis -N 1000 --OS=SL6 --expected-lifetime=8h \
+  --group dune --role=Analysis -N 10 --OS=SL6 --expected-lifetime=8h \
   file://${SCRIPT}
